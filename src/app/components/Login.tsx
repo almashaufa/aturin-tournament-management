@@ -56,7 +56,7 @@ export function Login() {
         <div className="bg-white rounded-2xl shadow-md p-8 md:p-10">
           <div className="text-center mb-8">
             <h1 className="text-4xl md:text-5xl font-bold text-primary mb-2">ATURIN</h1>
-            <p className="text-muted-foreground text-xs md:text-sm">Tournament Management System</p>
+            <p className="text-muted-foreground text-xs md:text-sm">Sistem Manajemen Turnamen</p>
           </div>
 
           <form onSubmit={handleLogin} className="space-y-5">
@@ -74,7 +74,9 @@ export function Login() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="password" className="text-primary text-base">Password</Label>
+             <Label htmlFor="password" className="text-primary text-base">
+  Kata Sandi
+</Label>
               <div className="relative">
                 <Input
                   id="password"
@@ -107,7 +109,7 @@ export function Login() {
                 type="button"
                 className="text-sm text-muted-foreground hover:text-primary transition-colors"
               >
-                Lupa Password?
+                Lupa Kata Sandi?
               </button>
             </div>
           </form>

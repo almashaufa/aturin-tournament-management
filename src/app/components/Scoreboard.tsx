@@ -4,7 +4,7 @@ import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "./ui/dialog";
 import { useApp } from "../context/AppContext";
-
+import { toast } from "sonner";
 interface ScoreboardProps {
   matchId: string;
   onBack: () => void;
@@ -73,13 +73,17 @@ export function Scoreboard({ matchId, onBack }: ScoreboardProps) {
       : `${team2.name} - ${team2.athlete1}`
     : "Tim Tidak Ditemukan";
 
-  const handleScoreChange = (team: "A" | "B", delta: number) => {
-    if (team === "A") {
-      setScoreA(Math.max(0, scoreA + delta));
-    } else {
-      setScoreB(Math.max(0, scoreB + delta));
-    }
-  };
+const handleScoreChange = (team: "A" | "B", delta: number) => {
+  if (team === "A") {
+    setScoreA(Math.max(0, scoreA + delta));
+  } else {
+    setScoreB(Math.max(0, scoreB + delta));
+  }
+
+  if (delta > 0) {
+    setServing(team);
+  }
+};
 
   const handleAddViolation = (type: string) => {
     if (!selectedTeam || !match) return;
@@ -113,34 +117,17 @@ export function Scoreboard({ matchId, onBack }: ScoreboardProps) {
     setShowFinishDialog(true);
   };
 
-  const handleExportData = () => {
-    if (!match || !team1 || !team2) return;
+ const handleExportData = () => {
+  if (!match) return;
 
-    // Finish the match in the context
-    finishMatch(matchId, scoreA, scoreB, violations);
+  finishMatch(matchId, scoreA, scoreB, violations);
 
-    const violationText = violations.map(v => {
-      const team = getTeamById(v.teamId);
-      return `${team?.name || 'Unknown'} - ${v.type} (${v.timestamp})`;
-    }).join("; ");
+  toast.success("Pertandingan berhasil disimpan");
 
-    const csvHeader = "Kode Pertandingan,Tim 1,Tim 2,Skor Tim 1,Skor Tim 2,Pelanggaran\n";
-    const csvRow = `${match.code},${team1.name},${team2.name},${scoreA},${scoreB},"${violationText || '-'}"`;
-    const csvContent = csvHeader + csvRow;
+  setShowFinishDialog(false);
 
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `${match.code}_hasil-pertandingan.csv`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-
-    setShowFinishDialog(false);
-    onBack();
-  };
+  onBack();
+};
 
   return (
     <div className="min-h-screen bg-background p-4 md:p-8">
@@ -292,7 +279,11 @@ export function Scoreboard({ matchId, onBack }: ScoreboardProps) {
                   className="bg-[#f5edc8] p-3 rounded-lg flex items-center justify-between"
                 >
                   <span className="text-primary">
-                    <strong>{violation.team === "A" ? team1Display : team2Display}</strong> - {violation.type} ({violation.timestamp})
+                   <strong>
+  {violation.teamId === match.team1Id
+    ? team1Display
+    : team2Display}
+</strong>- {violation.type} ({violation.timestamp})
                   </span>
                 </div>
               ))}
@@ -374,7 +365,7 @@ export function Scoreboard({ matchId, onBack }: ScoreboardProps) {
                 className="flex-1 h-12 rounded-xl bg-secondary hover:bg-secondary/90 gap-2"
               >
                 <Download className="w-4 h-4" />
-                Ekspor & Selesai
+                Simpan Pertandingan
               </Button>
             </div>
           </div>

@@ -3,6 +3,7 @@ import { ArrowLeft, Download, FileText } from "lucide-react";
 import { Button } from "../ui/button";
 import { useApp } from "../../context/AppContext";
 import { toast } from "sonner";
+import * as XLSX from "xlsx"; 
 
 export function EksporData() {
   const navigate = useNavigate();
@@ -41,36 +42,49 @@ export function EksporData() {
     toast.success("Data berhasil diekspor ke CSV");
   };
 
-  const handleExportExcel = () => {
-    if (finishedMatches.length === 0) {
-      toast.error("Belum ada pertandingan yang selesai untuk diekspor");
-      return;
-    }
+const handleExportExcel = () => {
+  if (finishedMatches.length === 0) {
+    toast.error("Belum ada pertandingan yang selesai untuk diekspor");
+    return;
+  }
 
-    const excelHeader = "Kode Pertandingan\tTim 1\tTim 2\tSkor Tim 1\tSkor Tim 2\tPelanggaran\n";
-    const excelRows = finishedMatches.map(match => {
-      const team1 = getTeamById(match.team1Id);
-      const team2 = getTeamById(match.team2Id);
-      const violationText = match.violations?.map(v => {
+  const data = finishedMatches.map(match => {
+    const team1 = getTeamById(match.team1Id);
+    const team2 = getTeamById(match.team2Id);
+
+    const violationText =
+      match.violations?.map(v => {
         const team = getTeamById(v.teamId);
         return `${team?.name} - ${v.type} (${v.timestamp})`;
       }).join("; ") || "-";
 
-      return `${match.code}\t${team1?.name}\t${team2?.name}\t${match.scoreTeam1}\t${match.scoreTeam2}\t${violationText}`;
-    }).join("\n");
+    return {
+      "Kode Pertandingan": match.code,
+      "Tim 1": team1?.name || "",
+      "Tim 2": team2?.name || "",
+      "Skor Tim 1": match.scoreTeam1,
+      "Skor Tim 2": match.scoreTeam2,
+      "Pelanggaran": violationText
+    };
+  });
 
-    const excelContent = excelHeader + excelRows;
-    const blob = new Blob([excelContent], { type: "application/vnd.ms-excel" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = "data-pertandingan.xls";
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-    toast.success("Data berhasil diekspor ke Excel");
-  };
+  const worksheet = XLSX.utils.json_to_sheet(data);
+
+  const workbook = XLSX.utils.book_new();
+
+  XLSX.utils.book_append_sheet(
+    workbook,
+    worksheet,
+    "Pertandingan"
+  );
+
+  XLSX.writeFile(
+    workbook,
+    "data-pertandingan.xlsx"
+  );
+
+  toast.success("Data berhasil diekspor ke Excel");
+};
 
   return (
     <div className="min-h-screen bg-background p-4 md:p-8">
